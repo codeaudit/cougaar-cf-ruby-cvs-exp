@@ -1,4 +1,16 @@
-Update release number to 0.1
-cvs tag ruby-cvs-exp_0_1
-Upload CVSHistory.rb to the release manager
+Update release number to 0.2
+
+CVSROOT=:ext:tom@cougaar.org:/cvsroot/cf-ruby-cvs-exp && export CVSROOTa
+cd ../../
+cvs tag -D tomorrow cf_ruby_cvs_exp_0_2 cf-ruby-cvs-exp
+cd cf-ruby-cvs-exp/etc
+rm -rf cf-ruby-cvs-exp
+mkdir cf-ruby-cvs-exp
+cp ../src/history.cgi cf-ruby-cvs-exp/
+cp ../src/CVSHistory.rb cf-ruby-cvs-exp/
+cp index.html cf-ruby-cvs-exp/readme.html
+tar -zcf cf-ruby-cvs-exp-0.2.tar.gz cf-ruby-cvs-exp/
+rm -rf cf-ruby-cvs-exp
+
+Upload the tarball to the CougaarForge file release manager
 Post a news item

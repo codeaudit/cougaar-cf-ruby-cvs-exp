@@ -1,3 +1,3 @@
-scp index.html tom@rubyforge.org:/var/www/gforge-projects/ruby-cvs-exp/
-#scp screenshot.png tom@rubyforge.org:/var/www/gforge-projects/ruby-cvs-exp/
+scp index.html tom@cougaar.org:/var/www/gforge-projects/cf-ruby-cvs-exp/
+#scp screenshot.png tom@cougaar.org:/var/www/gforge-projects/cf-ruby-cvs-exp/
 
