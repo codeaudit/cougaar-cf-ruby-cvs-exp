@@ -2,11 +2,15 @@
 <head>
 <title>Ruby-CVS-Exp</title>
 <body>
-<p>Ruby-CVS-exp (<a href="http://rubyforge.org/projects/ruby-cvs-exp/">project page</a>, <a href="http://rubyforge.org/project/showfiles.php?group_id=78">download</a>) is a Ruby wrapper around Sitaram Iyer's excellent little <a href="http://www.cs.rice.edu/~ssiyer/code/cvs-exp/">cvs-exp.pl</a> utility.  
+<p>Ruby-CVS-exp (<a href="http://cougaar.org/projects/cf-ruby-cvs-exp/">project page</a>, <a href="http://cougaar.org/frs/?group_id=36">download</a>) is a Ruby wrapper around Sitaram Iyer's excellent little <a href="http://www.cs.rice.edu/~ssiyer/code/cvs-exp/">cvs-exp.pl</a> utility.  
 
 <p>Ruby-CVS-exp makes is possible to convert the output of cvs-exp to HTML (screenshot is below).  This is handy for displaying recent commits to a project, as you can see by clicking on one of the "Recent" links <a href="https://ultraforge.ultralog.net">here</a>.
 
 <p>Very generally, you can put CVSHistory.rb in your cgi-bin directory and then use a little CGI script like <a href="http://cougaar.org/cgi-bin/viewcvs.cgi/cf-ruby-cvs-exp/src/?cvsroot=cf-ruby-cvs-exp">history.cgi</a> to interface with it.  Note that this CGI script expects three parameters - the cvs root, the module directory name, and the branch name.  There's also an optional "days" parameter which tells it how many days of history to display.
+
+<p>Note that you'll need to edit <code>history.cgi</code>to reflect your CVS repository prefix (see the ALLOWED_ROOT definition), and you'll also need to edit <code>CVSHistory.rb</code> to point to a working directory and the location of your copy of <code>cvs-exp.pl</code>.
+
+<p>Here's a screenshot of the results:
 
 <p><img src="screenshot.png"/>
 </body>
