@@ -1,0 +1,4 @@
+Update release number to 0.1
+cvs tag ruby-cvs-exp_0_1
+Upload CVSHistory.rb to the release manager
+Post a news item
