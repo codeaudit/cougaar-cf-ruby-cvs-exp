@@ -5,6 +5,7 @@ require 'parsedate'
 require 'cgi'
 
 CVS_EXP="/tmp/histwork/cvs-exp.pl"
+WORKING_DIRECTORY="/tmp/histwork"
 
 class DateLine
 	TIMEZONE_OFFSET = 18000
@@ -56,18 +57,18 @@ class Entry
 end
 
 class Params
-	attr_reader :root, :moduleDir, :branch, :max_age
-	def initialize(root, moduleDir, branch, max_age)
+	attr_reader :root, :module_directory, :branch, :max_age
+	def initialize(root, module_directory, branch, max_age)
 		@root = root
 		@branch = branch
-		@moduleDir = moduleDir
+		@module_directory = module_directory
 		@max_age = max_age
 	end
 	def to_s
 		s = "cvsexpLocation = " + CVS_EXP + "\n"
 		s << "root = " + @root + "\n"
 		s << "branch = " + @branch + "\n"
-		s << "moduleDir = " + @moduleDir + "\n"
+		s << "module_directory = " + @module_directory + "\n"
 		s << "max_age = " + @max_age.to_s + "\n"
 	end
 end
@@ -86,10 +87,10 @@ class CVSLogWrapper
 			lines=block.split("\n")
 			# check to see if this is our target branch
 			if lines[1] == "BRANCH [#{params.branch}]"
-				addEntry(lines, 3, params.moduleDir, params.max_age)
+				addEntry(lines, 3, params.module_directory, params.max_age)
 			elsif lines[1] == ""
 				# not our target branch, and first line is blank, so it's the HEAD
-				addEntry(lines, 2, params.moduleDir, params.max_age)
+				addEntry(lines, 2, params.module_directory, params.max_age)
 			end
 		end
 		@entries.sort {|a,b| return a.dateLine.date <=> b.dateLine.date}
@@ -137,8 +138,13 @@ class CVSLogWrapper
 end
 
 if __FILE__ ==$0 
-	root, moduleDir, branch, max_age = ARGV[0], ARGV[1], ARGV[2], ARGV[3].to_i
-	p = Params.new(root, moduleDir, branch, max_age)
-	c = CVSLogWrapper.new(p)
-	c.dump
+	if ARGV.length != 4
+		puts "Usage: CVSHistory.rb /cvs/commons/isat/ ticenvironment HEAD 20"
+		exit
+	end
+	root, module_directory, branch, max_age = ARGV[0], ARGV[1], ARGV[2], ARGV[3].to_i
+	p = Params.new(root, module_directory, branch, max_age)
+	Dir.chdir(WORKING_DIRECTORY)
+  `cvs -Q -d#{root} co #{p.module_directory}`
+	CVSLogWrapper.new(p).dump
 end
