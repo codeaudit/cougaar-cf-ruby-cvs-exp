@@ -79,6 +79,7 @@ class CVSLogWrapper
 		ENV['CVSROOT']=params.root
 		@branch = params.branch
 		@entries = []
+		@skipped = []
 
 		cmd = "perl #{CVS_EXP} --notree #{@branch == "HEAD" ? "" : "-r" + @branch} 2>/dev/null"
 		raw_text = `#{cmd}`
@@ -91,17 +92,18 @@ class CVSLogWrapper
 			elsif lines[1] == ""
 				# not our target branch, and first line is blank, so it's the HEAD
 				add_entry(lines, 2, params.module_directory, params.max_age)
+			else
+				# it's part of the import, so skip it
+				@skipped << lines
 			end
 		end
-		@entries.sort {|a,b| return a.date_line.date <=> b.date_line.date}
+		@entries.sort{|a,b| a.date_line.date <=> b.date_line.date}
 	end 
-	def add_entry(lines, date_line_index, targetModuleDir, max_age)
+	def add_entry(lines, date_line_index, target_module_directory, max_age)
 		dateline=DateLine.new(lines[date_line_index])
 		return unless !dateline.older_than(max_age)
 		files=Files.new
-		lines.each do |line|
-			files.add(line) unless line[" | "] == nil
-		end
+		lines.each { |line| files.add(line) unless line[" | "] == nil }
 		comment = nil
 		lines.each_index do |idx|
 			if lines[idx]["`----------------------------------------"] != nil
@@ -109,27 +111,28 @@ class CVSLogWrapper
 				break
 			end
 		end
-		@entries << Entry.new(dateline,files,comment) unless files.list[0][targetModuleDir] == nil
+		@entries << Entry.new(dateline,files,comment) unless files.list[0][target_module_directory] == nil
 	end 
-	def dump
-		@entries.reverse.each do |e|
-			e.files.list.each do |f|
-				puts e.get_date_with_nice_format + ":" + e.date_line.author + ":" + f + ":" + e.comment
-			end
-		end
-	end
-	def html
+	def html(show_skipped_entries=false)
 		page = "<div align=\"center\"><table style=\"font-size:90%\"><tr><th>When</th><th>Who</th><th>What</th><th>Why</th></tr>"
-		@entries.reverse.each do |e|
-			e.files.list.each do |file|
+		@entries.reverse.each { |e|
+			e.files.list.each { |file|
 				page << "<tr bgcolor=\"#CCFFCC\"><td nowrap>" + 
 								e.get_date_with_nice_format + "</td> <td nowrap>" + 
 								e.date_line.author + "</td> <td> " + 
 								file + "</td><td>" + 
-								e.comment.to_s + "</td></tr>"
-			end
-		end
+								e.comment + "</td></tr>\n"
+			}
+		}
+		@skipped.each {|e| page << "<tr><td>#{e}</td></tr>" } if show_skipped_entries
 		page << "</table></div></body></html>"
+	end
+	def dump
+		@entries.reverse.each { |e|
+			e.files.list.each { |f|
+				puts e.get_date_with_nice_format + ":" + e.date_line.author + ":" + f + ":" + e.comment
+			}
+		}
 	end
 end
 
