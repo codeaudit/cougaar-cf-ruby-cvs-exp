@@ -4,6 +4,8 @@ require 'date'
 require 'parsedate'
 require 'cgi'
 
+CVS_EXP="/tmp/histwork/cvs-exp.pl"
+
 class DateLine
 	TIMEZONE_OFFSET = 18000
 	attr_reader :date, :author
@@ -54,16 +56,15 @@ class Entry
 end
 
 class Params
-	attr_reader :root, :moduleDir, :branch, :cvsexpLocation, :max_age
-	def initialize(cvsexpLocation, root, moduleDir, branch, max_age)
-		@cvsexpLocation = cvsexpLocation
+	attr_reader :root, :moduleDir, :branch, :max_age
+	def initialize(root, moduleDir, branch, max_age)
 		@root = root
 		@branch = branch
 		@moduleDir = moduleDir
 		@max_age = max_age
 	end
 	def to_s
-		s = "cvsexpLocation = " + @cvsexpLocation + "\n"
+		s = "cvsexpLocation = " + CVS_EXP + "\n"
 		s << "root = " + @root + "\n"
 		s << "branch = " + @branch + "\n"
 		s << "moduleDir = " + @moduleDir + "\n"
@@ -78,7 +79,7 @@ class CVSLogWrapper
 		@branch = params.branch
 		branchStr = @branch == "HEAD" ? "" : "-r" + @branch
 		@entries = []
-		cmd = "perl #{params.cvsexpLocation} --notree #{branchStr} 2>/dev/null"
+		cmd = "perl #{CVS_EXP} --notree #{branchStr} 2>/dev/null"
 		rawText = `#{cmd}`
 		blocks = rawText.split("==============================================================================")
 		blocks.each do |block|
@@ -137,7 +138,7 @@ end
 
 if __FILE__ ==$0 
 	root, moduleDir, branch, max_age = ARGV[0], ARGV[1], ARGV[2], ARGV[3].to_i
-	p = Params.new("/tmp/histwork/cvs-exp.pl", root, moduleDir, branch, max_age)
+	p = Params.new(root, moduleDir, branch, max_age)
 	c = CVSLogWrapper.new(p)
 	c.dump
 end
