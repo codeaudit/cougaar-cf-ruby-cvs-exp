@@ -23,7 +23,7 @@ class DateLine
 		@author = authorLine.split(":")[4]
 	end
 	def older_than(days)
-		return date + (days*86400) < Time.now
+		date + (days*86400) < Time.now
 	end
 end
 
@@ -38,9 +38,6 @@ class Files
  	filename=rawText[a, rawText.length-2]
   # when is the filename ever null?
 	@list.push(filename) unless filename == nil
- end
- def size 
-  return @list.size
  end
 end
 
@@ -79,13 +76,11 @@ class CVSLogWrapper
 	def initialize(params)
 		ENV['CVSROOT']=params.root
 		@branch = params.branch
-		branchStr=""
-		if @branch != "HEAD"
-			branchStr = "-r#{@branch}"
-		end
+		branchStr = @branch == "HEAD" ? "" : "-r" + @branch
 		@entries = []
-		@rawText = `perl #{params.cvsexpLocation} --notree #{branchStr} 2>/dev/null`
-		blocks = @rawText.split("==============================================================================")
+		cmd = "perl #{params.cvsexpLocation} --notree #{branchStr} 2>/dev/null"
+		rawText = `#{cmd}`
+		blocks = rawText.split("==============================================================================")
 		blocks.each do |block|
 			lines=block.split("\n")
 			# check to see if this is our target branch
@@ -96,8 +91,7 @@ class CVSLogWrapper
 				addEntry(lines, 2, params.moduleDir, params.max_age)
 			end
 		end
-		sort
-		@entries.reverse!
+		@entries.sort {|a,b| return a.dateLine.date <=> b.dateLine.date}
 	end 
 
 	def addEntry(lines, dateLineIndex, targetModuleDir, max_age)
@@ -114,12 +108,8 @@ class CVSLogWrapper
 				break
 			end
 		end
-		entries << Entry.new(dateline,files,comment) unless files.list[0][targetModuleDir] == nil
+		@entries << Entry.new(dateline,files,comment) unless files.list[0][targetModuleDir] == nil
 	end 
-
-	def sort
-		@entries.sort {|a,b| return a.dateLine.date <=> b.dateLine.date}
-	end
 
 	def dump
 		@entries.each do |e|
@@ -129,24 +119,25 @@ class CVSLogWrapper
 		end
 	end
 
-	def getHTML()
+	def getHTML
 		page = "<div align=\"center\"><table style=\"font-size:90%\"><tr><th>When</th><th>Who</th><th>What</th><th>Why</th></tr>"
-		entries.each do |entry|
-			entry.files.list.each do |file|
+		@entries.reverse.each do |e|
+			e.files.list.each do |file|
 				page << "<tr bgcolor=\"#CCFFCC\"><td nowrap>" + 
-								entry.get_date_with_nice_format + "</td> <td nowrap>" + 
-								entry.dateLine.author + "</td> <td> " + 
+								e.get_date_with_nice_format + "</td> <td nowrap>" + 
+								e.dateLine.author + "</td> <td> " + 
 								file + "</td><td>" + 
-								entry.comment + "</td></tr>"
+								e.comment.to_s + "</td></tr>"
 			end
 		end
-		page << "</table></div>"
+		page << "</table></div></body></html>"
 		return page
-		end
 	end
+end
 
 if __FILE__ ==$0 
-	p = Params.new("/tmp/histwork/cvs-exp.pl", ARGV[0], ARGV[1], ARGV[2], ARGV[3].to_i)
+	root, moduleDir, branch, max_age = ARGV[0], ARGV[1], ARGV[2], ARGV[3].to_i
+	p = Params.new("/tmp/histwork/cvs-exp.pl", root, moduleDir, branch, max_age)
 	c = CVSLogWrapper.new(p)
-	c.dump()
+	c.dump
 end
