@@ -16,7 +16,7 @@ if root =~ /^#{ALLOWED_ROOT}/
 	p = Params.new(root.to_s, moduleDir.to_s, branch.to_s, days.to_i)
 	Dir.chdir(WORKING_DIRECTORY)
 	`cvs -Q -d#{root} co #{p.module_directory}`
-	msg = CVSLogWrapper.new(p).getHTML
+	msg = CVSLogWrapper.new(p).html
 end
 
 cgi.out {

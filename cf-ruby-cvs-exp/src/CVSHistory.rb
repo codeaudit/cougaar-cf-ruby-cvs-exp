@@ -10,19 +10,19 @@ WORKING_DIRECTORY="/tmp/histwork"
 class DateLine
 	TIMEZONE_OFFSET = 18000
 	attr_reader :date, :author
-	def initialize(rawText)
-		a = rawText.index("(date: ")+7
-		b = rawText.index("  ", a)
-		dateStr = rawText[a, 10].gsub("/","-")
+	def initialize(raw_text)
+		a = raw_text.index("(date: ")+7
+		b = raw_text.index("  ", a)
+		dateStr = raw_text[a, 10].gsub("/","-")
 		dateArr = ParseDate::parsedate(dateStr)
-		a = rawText.index(" ", a)
-		b = rawText.index(";", a)
-		timeStr = rawText[a+1, b-a-1]
+		a = raw_text.index(" ", a)
+		b = raw_text.index(";", a)
+		timeStr = raw_text[a+1, b-a-1]
 		timeArr = timeStr.split(":")
 		@date = Time.gm(dateArr[0], dateArr[1], dateArr[2],timeArr[0],timeArr[1],timeArr[2]) - TIMEZONE_OFFSET
-		a = rawText.index("author") + 8 
-		b = rawText.index(";", a)
-		authorLine=`grep "#{rawText[a, b-a]}:" /etc/passwd`
+		a = raw_text.index("author") + 8 
+		b = raw_text.index(";", a)
+		authorLine=`grep "#{raw_text[a, b-a]}:" /etc/passwd`
 		@author = authorLine.split(":")[4]
 	end
 	def older_than(days)
@@ -35,10 +35,10 @@ class Files
  def initialize 
   @list = []
  end
- def add(rawText)
-  a = rawText.index("| ") + 2
-  b = rawText.index(":", a)
- 	filename=rawText[a, rawText.length-2]
+ def add(raw_text)
+  a = raw_text.index("| ") + 2
+  b = raw_text.index(":", a)
+ 	filename=raw_text[a, raw_text.length-2]
   # when is the filename ever null?
 	@list.push(filename) unless filename == nil
  end
@@ -74,29 +74,29 @@ class Params
 end
 
 class CVSLogWrapper
-	attr_reader :entries, :rawText
+	attr_reader :entries, :raw_text
 	def initialize(params)
 		ENV['CVSROOT']=params.root
 		@branch = params.branch
-		branchStr = @branch == "HEAD" ? "" : "-r" + @branch
 		@entries = []
-		cmd = "perl #{CVS_EXP} --notree #{branchStr} 2>/dev/null"
-		rawText = `#{cmd}`
-		blocks = rawText.split("==============================================================================")
+
+		cmd = "perl #{CVS_EXP} --notree #{@branch == "HEAD" ? "" : "-r" + @branch} 2>/dev/null"
+		raw_text = `#{cmd}`
+		blocks = raw_text.split("==============================================================================")
 		blocks.each do |block|
 			lines=block.split("\n")
 			# check to see if this is our target branch
 			if lines[1] == "BRANCH [#{params.branch}]"
-				addEntry(lines, 3, params.module_directory, params.max_age)
+				add_entry(lines, 3, params.module_directory, params.max_age)
 			elsif lines[1] == ""
 				# not our target branch, and first line is blank, so it's the HEAD
-				addEntry(lines, 2, params.module_directory, params.max_age)
+				add_entry(lines, 2, params.module_directory, params.max_age)
 			end
 		end
 		@entries.sort {|a,b| return a.dateLine.date <=> b.dateLine.date}
 	end 
 
-	def addEntry(lines, dateLineIndex, targetModuleDir, max_age)
+	def add_entry(lines, dateLineIndex, targetModuleDir, max_age)
 		dateline=DateLine.new(lines[dateLineIndex])
 		return unless !dateline.older_than(max_age)
 		files=Files.new
@@ -114,14 +114,14 @@ class CVSLogWrapper
 	end 
 
 	def dump
-		@entries.each do |e|
+		@entries.reverse.each do |e|
 			e.files.list.each do |f|
 				puts e.get_date_with_nice_format + ":" + e.dateLine.author + ":" + f + ":" + e.comment
 			end
 		end
 	end
 
-	def getHTML
+	def html
 		page = "<div align=\"center\"><table style=\"font-size:90%\"><tr><th>When</th><th>Who</th><th>What</th><th>Why</th></tr>"
 		@entries.reverse.each do |e|
 			e.files.list.each do |file|
@@ -133,7 +133,6 @@ class CVSLogWrapper
 			end
 		end
 		page << "</table></div></body></html>"
-		return page
 	end
 end
 
