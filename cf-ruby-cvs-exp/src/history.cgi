@@ -21,9 +21,7 @@ cgi.out {
 			p = Params.new(CVS_EXP, root.to_s, moduleDir.to_s, branch.to_s, days.to_i)
 			Dir.chdir(WORKING_DIRECTORY)
 			`cvs -Q -d#{root} co #{p.moduleDir}`
-			c = CVSLogWrapper.new(p)
-			`rm -rf #{p.moduleDir}`
-			c.getHTML
+			CVSLogWrapper.new(p).getHTML
 		}
 	}
 }
