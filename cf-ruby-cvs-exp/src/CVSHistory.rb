@@ -11,13 +11,14 @@ class DateLine
 	TIMEZONE_OFFSET = 18000
 	attr_reader :date, :author
 	def initialize(raw_text)
+		#puts raw_text
 		a = raw_text.index("(date: ")+7
 		b = raw_text.index("  ", a)
-		dateStr = raw_text[a, 10].gsub("/","-")
-		dateArr = ParseDate::parsedate(dateStr)
+		dateArr = ParseDate::parsedate(raw_text[/\w[0-9]*\/[0-9]*\/[0-9]*/])
 		a = raw_text.index(" ", a)
 		b = raw_text.index(";", a)
 		timeStr = raw_text[a+1, b-a-1]
+		#puts timeStr
 		timeArr = timeStr.split(":")
 		@date = Time.gm(dateArr[0], dateArr[1], dateArr[2],timeArr[0],timeArr[1],timeArr[2]) - TIMEZONE_OFFSET
 		a = raw_text.index("author") + 8 
