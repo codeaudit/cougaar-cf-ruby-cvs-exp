@@ -3,7 +3,6 @@
 require 'cgi'
 require 'CVSHistory'
 
-WORKING_DIRECTORY="/tmp/histwork"
 ALLOWED_ROOT = "/cvs"
 
 cgi = CGI.new("html3")
@@ -16,7 +15,7 @@ if root =~ /^#{ALLOWED_ROOT}/
 	days = !cgi.params['days'][0].nil? ? cgi.params['days'][0] : 5
 	p = Params.new(root.to_s, moduleDir.to_s, branch.to_s, days.to_i)
 	Dir.chdir(WORKING_DIRECTORY)
-	`cvs -Q -d#{root} co #{p.moduleDir}`
+	`cvs -Q -d#{root} co #{p.module_directory}`
 	msg = CVSLogWrapper.new(p).getHTML
 end
 
