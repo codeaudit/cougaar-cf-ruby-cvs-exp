@@ -3,29 +3,27 @@
 require 'cgi'
 require 'CVSHistory'
 
-WORKING_DIR="/tmp/histwork/"
-PATH_TO_CVS_EXP="/tmp/histwork/cvs-exp.pl"
+CVS_EXP="/tmp/histwork/cvs-exp.pl"
+WORKING_DIRECTORY="/tmp/histwork"
 
 cgi = CGI.new("html3")
-root=cgi['root'][0]
-moduleDir=cgi['moduleDir'][0]
-branch=cgi['branch'][0]
-days=30
-if cgi['days'][0] != nil
-	days = cgi['days'][0]
+root=cgi.params['root'][0]
+moduleDir=cgi.params['moduleDir'][0]
+branch=cgi.params['branch'][0]
+days = 5
+if cgi.params['days'][0] != nil
+	days = cgi.params['days'][0]
 end
-
-Dir.mkdir(WORKING_DIR) unless File.exists?(WORKING_DIR)
 
 cgi.out {
 	cgi.html {
 		cgi.body {
-			ENV['CVSROOT'] = root
-			Dir.chdir(WORKING_DIR)
-			`cvs -Q co #{moduleDir}`
-			c = CVSLogWrapper.new(Params.new(PATH_TO_CVS_EXP, root, moduleDir, branch, days.to_i))
-			`rm -rf #{moduleDir}`
-			c.getHTML()
+			p = Params.new(CVS_EXP, root.to_s, moduleDir.to_s, branch.to_s, days.to_i)
+			Dir.chdir(WORKING_DIRECTORY)
+			`cvs -Q -d#{root} co #{p.moduleDir}`
+			c = CVSLogWrapper.new(p)
+			`rm -rf #{p.moduleDir}`
+			c.getHTML
 		}
 	}
 }
