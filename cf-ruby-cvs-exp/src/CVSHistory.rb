@@ -36,11 +36,7 @@ class Files
   @list = []
  end
  def add(raw_text)
-  a = raw_text.index("| ") + 2
-  b = raw_text.index(":", a)
- 	filename=raw_text[a, raw_text.length-2]
-  # when is the filename ever null?
-	@list.push(filename) unless filename == nil
+	@list << raw_text[/\|.*\:/][1, raw_text[/\|.*\:/].length-2].strip
  end
 end
 
@@ -88,30 +84,30 @@ class CVSLogWrapper
 			lines=block.split("\n")
 			# check to see if this is our target branch
 			if lines[1] == "BRANCH [#{params.branch}]"
-				add_entry(lines, 3, params.module_directory, params.max_age)
+				d = DateLine.new(lines[3])
+				add_entry(lines, params, d) unless d.older_than(params.max_age)
 			elsif lines[1] == ""
 				# not our target branch, and first line is blank, so it's the HEAD
-				add_entry(lines, 2, params.module_directory, params.max_age)
+				d = DateLine.new(lines[2])
+				add_entry(lines, params, d) unless d.older_than(params.max_age)
 			else
-				# it's part of the import, so skip it
+				# it's part of the initial import, so skip it
 				@skipped << lines
 			end
 		end
 		@entries.sort{|a,b| a.date_line.date <=> b.date_line.date}
 	end 
-	def add_entry(lines, date_line_index, target_module_directory, max_age)
-		dateline=DateLine.new(lines[date_line_index])
-		return unless !dateline.older_than(max_age)
+	def add_entry(lines, params, dateline)
 		files=Files.new
 		lines.each { |line| files.add(line) unless line[" | "] == nil }
 		comment = nil
 		lines.each_index do |idx|
-			if lines[idx]["`----------------------------------------"] != nil
+			if lines[idx] =~ /`----------------------------------------/
 				comment = lines[idx+2]	
 				break
 			end
 		end
-		@entries << Entry.new(dateline,files,comment) unless files.list[0][target_module_directory] == nil
+		@entries << Entry.new(dateline,files,comment) unless files.list[0][params.module_directory] == nil
 	end 
 	def html(show_skipped_entries=false)
 		page = "<div align=\"center\"><table style=\"font-size:90%\"><tr><th>When</th><th>Who</th><th>What</th><th>Why</th></tr>"
