@@ -45,14 +45,14 @@ class Files
 end
 
 class Entry
-	attr_reader :dateLine, :files, :comment
-	def initialize(dateLine,files, comment)
-		@dateLine = dateLine
+	attr_reader :date_line, :files, :comment
+	def initialize(date_line,files, comment)
+		@date_line = date_line
 		@files = files
 		@comment=comment
 	end
 	def get_date_with_nice_format
-		@dateLine.date.strftime("%m/%d/%Y %I:%M %p")
+		@date_line.date.strftime("%m/%d/%Y %I:%M %p")
 	end
 end
 
@@ -93,11 +93,10 @@ class CVSLogWrapper
 				add_entry(lines, 2, params.module_directory, params.max_age)
 			end
 		end
-		@entries.sort {|a,b| return a.dateLine.date <=> b.dateLine.date}
+		@entries.sort {|a,b| return a.date_line.date <=> b.date_line.date}
 	end 
-
-	def add_entry(lines, dateLineIndex, targetModuleDir, max_age)
-		dateline=DateLine.new(lines[dateLineIndex])
+	def add_entry(lines, date_line_index, targetModuleDir, max_age)
+		dateline=DateLine.new(lines[date_line_index])
 		return unless !dateline.older_than(max_age)
 		files=Files.new
 		lines.each do |line|
@@ -112,22 +111,20 @@ class CVSLogWrapper
 		end
 		@entries << Entry.new(dateline,files,comment) unless files.list[0][targetModuleDir] == nil
 	end 
-
 	def dump
 		@entries.reverse.each do |e|
 			e.files.list.each do |f|
-				puts e.get_date_with_nice_format + ":" + e.dateLine.author + ":" + f + ":" + e.comment
+				puts e.get_date_with_nice_format + ":" + e.date_line.author + ":" + f + ":" + e.comment
 			end
 		end
 	end
-
 	def html
 		page = "<div align=\"center\"><table style=\"font-size:90%\"><tr><th>When</th><th>Who</th><th>What</th><th>Why</th></tr>"
 		@entries.reverse.each do |e|
 			e.files.list.each do |file|
 				page << "<tr bgcolor=\"#CCFFCC\"><td nowrap>" + 
 								e.get_date_with_nice_format + "</td> <td nowrap>" + 
-								e.dateLine.author + "</td> <td> " + 
+								e.date_line.author + "</td> <td> " + 
 								file + "</td><td>" + 
 								e.comment.to_s + "</td></tr>"
 			end
